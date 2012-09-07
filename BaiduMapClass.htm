@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>新地图操作UI</title>
+    <style type="text/css">
+html{height:100%}
+body{height:100%;margin:0px;padding:0px}
+#container{height:100%; width:100%;}
+#dialog{ font-size:85%;}
+</style>
+    <script src="http://api.map.baidu.com/api?v=1.2" type="text/javascript"></script>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/start/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+  <script type="text/javascript">
+      function selectTabs() {
+
+          $(".tt").hide();
+          $("#tabs1").show();
+          $("#a1").click(function() {
+              $(".tt").hide();
+              $("#tabs1").show();
+
+          });
+          $("#a2").click(function() {
+              $(".tt").hide();
+              $("#tabs2").show();
+
+          });
+          $("#a3").click(function() {
+              $(".tt").hide();
+              $("#tabs3").show();
+
+          });
+
+      }
+  </script>
+  <script type="text/javascript">
+      $(document).ready(function() {
+          $("#dialog").dialog({ autoOpen: true, modal: false, show: "slide", hide: "slide", draggable: true, closeText: "hide", closeOnEscape: true,position:["right","top"] } );
+          $(document).keypress(function(e) {
+              if (e.which == 13) {
+                  $("#dialog").dialog("open");
+                  
+              }
+              $("#LocalSearch").focus();
+          });
+          selectTabs();
+      });
+  </script>
+</head>
+<body>
+<div id="container"></div>
+<div id="dialog" title='<a href="#" id="a1">本地搜索</a>&nbsp;&nbsp;<a href="#" id="a2">公交</a>&nbsp;&nbsp;<a href="#" id="a3">自驾</a>'>
+<div id="tabs1" class="tt">
+            输入关键字：<input id="LocalSearch" type="text" /><br />
+            视野内搜索<br />
+        </div>
+        <div id="tabs2" class="tt">
+            <input type="text" />到<input type="text" /><input type="button" value="查询" /><br />
+            当前的城市是:<br />
+            城市进入：<input type="text" /><input type="button" value="进入" /><br />
+            公交线路查询:<input type="text" /><input type="button" value="查询" /><br />
+            <input type="button" value="当前城市地图任选两点查询公交" />
+        </div>
+        <div id="tabs3" class="tt">
+            <input type="text" />到<input type="text" /><input type="button" value="查询" /><br />
+             <input type="button" value="任选两点查询自驾游路线" /><br />
+            </div>
+</div>
+<div id="results" title="本地搜索结果页面" style="font-size:13px;margin-top:10px;"></div>
+</body>
+<script type="text/javascript">
+//创建和初始化地图函数
+function initMap() {
+    createMap(); //创建地图
+    setMapEvent(); //设置地图事件
+    addMapControl(); //向地图添加控件
+    rightClick();//公交搜索
+    instantSearch();//调用Instant功能
+}
+//创建地图函数：
+function createMap() {
+    var map = new BMap.Map("container"); //在百度地图容器中创建一个地图
+    var point = new BMap.Point(120.145536, 30.294608); //定义一个中心点坐标
+    map.centerAndZoom(point, 17); //设定地图的中心点和坐标并将地图显示在地图容器中
+    window.map = map; //将map变量存储在全局
+	var viewzoom=map.getBounds();//返回一个可视区域
+	//viewzoom.containsPoint(point);//如果点的地理坐标位于此矩形内，则返回true。 
+	alert(viewzoom.containsPoint(point));
+}
+
+//地图事件设置函数：
+function setMapEvent() {
+    map.enableDragging(); //启用地图拖拽事件，默认启用(可不写)
+    map.enableScrollWheelZoom(); //启用地图滚轮放大缩小
+    map.enableDoubleClickZoom(); //启用鼠标双击放大，默认启用(可不写)
+    map.enableKeyboard(); //启用键盘上下左右键移动地图
+}
+
+//地图控件添加函数：
+function addMapControl() {
+    //向地图中添加缩放控件
+    var ctrl_nav = new BMap.NavigationControl({ anchor: BMAP_ANCHOR_TOP_LEFT, type: BMAP_NAVIGATION_CONTROL_LARGE });
+    map.addControl(ctrl_nav);
+    //向地图中添加缩略图控件
+    var ctrl_ove = new BMap.OverviewMapControl({ anchor: BMAP_ANCHOR_BOTTOM_RIGHT, isOpen: 1 });
+    map.addControl(ctrl_ove);
+    //向地图中添加比例尺控件
+    var ctrl_sca = new BMap.ScaleControl({ anchor: BMAP_ANCHOR_BOTTOM_LEFT });
+    map.addControl(ctrl_sca);
+}
+
+//------------本地搜索开始
+function localSearch(keywords) {
+    var local = new BMap.LocalSearch(map, {
+    renderOptions: { map: map, panel: "results" }
+    });
+    local.search(keywords);
+}
+
+//用于返回一个无参数的本地搜索
+function _localSearch(keywords) {
+map.clearOverlays();
+    return function() {
+        localSearch(keywords);
+    }
+}
+
+//开启Instant功能
+function instantSearch() {
+    $("#LocalSearch").keyup(function(e) {//监听键盘按下事件
+    var keywords="nonono1";
+    keywords = $("#LocalSearch").val();
+    if(keywords == ""){
+    //alert(keywords);
+    return false;
+    }
+    
+        var timer = setTimeout(_localSearch(keywords), 500); //有时候键盘按得太快，监听事件来不及反应，所以用setTimeout函数来延迟
+        $("#results").dialog({ show: "slide", hide: "slide", draggable: true  });
+        $("#results").dialog("open");
+    });
+
+}
+//-------本地搜索结束
+
+
+//右键菜单
+function rightClick() {
+    var startPoint = null;
+    var endPoint = null;
+    var bus_maker = null; //公交起始标志
+    var car_maker = null; //自驾起始标志
+    var car_star = null;
+    var car_end = null;
+    var driving = new BMap.DrivingRoute(map, {renderOptions: {map: map, panel: "results", autoViewport: true}});
+    
+    var menu = new BMap.ContextMenu();
+    var txtMenuItem = [
+  {
+      text: '公交起点',
+      callback: function(e) { map.clearOverlays(bus_maker); if (!startPoint) { startPoint = e; bus_maker = new BMap.Marker(startPoint); map.addOverlay(bus_maker); } }
+  },
+  {
+      text: '公交终点',
+      callback: function(e2) { if (!endPoint) { endPoint = e2; busSearch(startPoint, endPoint); startPoint = endPoint = null;  $("#results").dialog({ show: "slide", hide: "slide", draggable: true }); $("#results").dialog("open"); } }
+
+  },
+  {
+      text: '自驾起点',
+      callback: function(e) { map.clearOverlays(car_maker); if (!car_star) { car_star = e; car_maker = new BMap.Marker(car_star); map.addOverlay(car_maker); } }
+  },
+  {
+      text: '自驾终点',
+      callback: function(e2) { if (!car_end) { car_end = e2; driving.search(car_star, car_end); car_star = car_end = null;  $("#results").dialog({ show: "slide", hide: "slide", draggable: true }); $("#results").dialog("open"); } }
+  }
+
+ ];
+
+
+    for (var i = 0; i < txtMenuItem.length; i++) {
+        menu.addItem(new BMap.MenuItem(txtMenuItem[i].text, txtMenuItem[i].callback, 100));
+    }
+    map.addContextMenu(menu);
+}
+
+//公交查询
+function busSearch(a1,a2) {
+    var transit = new BMap.TransitRoute(map, {
+    renderOptions: { map: map, panel: "results"}  // 通过renderOptions提供用于展示结果的map对象
+    });
+    transit.search(a1, a2);
+}
+
+$(function() {
+    initMap();
+    
+    
+    
+    /*//调用本地搜索
+    $("#searchit").click(function() {
+
+        var searchWords = $("#LocalSearch").val();
+        localSearch(searchWords);
+        $("#results").dialog({show: "slide", hide: "slide", draggable: true});
+        $("#results").dialog("open");
+    });
+    */
+});
+
+
+</script>
+</html>
