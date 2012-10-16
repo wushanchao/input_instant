@@ -129,19 +129,20 @@ map.clearOverlays();
     }
 }
 
-//开启Instant功能
+//2012.10.16更新，这个函数转为插件，在wscQuery项目里面。开启Instant功能
+//插件化，需要三个参数，一个是input框，一个是事件处理函数
 function instantSearch() {
     $("#LocalSearch").keyup(function(e) {//监听键盘按下事件
-    var keywords="nonono1";
-    keywords = $("#LocalSearch").val();
-    if(keywords == ""){
-    //alert(keywords);
-    return false;
-    }
-    
-        var timer = setTimeout(_localSearch(keywords), 500); //有时候键盘按得太快，监听事件来不及反应，所以用setTimeout函数来延迟
-        $("#results").dialog({ show: "slide", hide: "slide", draggable: true  });
-        $("#results").dialog("open");
+      var keywords="nonono1";
+      keywords = $("#LocalSearch").val();
+      if(keywords == ""){
+        //alert(keywords);
+        return false;
+      }
+      
+      var timer = setTimeout(_localSearch(keywords), 500); //有时候键盘按得太快，监听事件来不及反应，所以用setTimeout函数来延迟
+      $("#results").dialog({ show: "slide", hide: "slide", draggable: true  });
+      $("#results").dialog("open");
     });
 
 }
